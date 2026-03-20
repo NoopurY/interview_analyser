@@ -1,0 +1,23 @@
+{
+  "model": "RandomForestRegressor",
+  "n_estimators": 200,
+  "mae": 4.9841,
+  "r2_score": 0.7873,
+  "cv_r2_mean": 0.7895,
+  "cv_r2_std": 0.0356,
+  "features": [
+    "filler_rate",
+    "filler_count",
+    "ttr",
+    "conf_ratio",
+    "star_score",
+    "prof_terms",
+    "has_numbers",
+    "mean_sentence_len",
+    "speaking_rate",
+    "pause_frequency",
+    "pitch_variation"
+  ],
+  "training_samples": 800,
+  "test_samples": 200
+}

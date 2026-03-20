@@ -1,0 +1,15 @@
+flask==3.0.0
+flask-cors==4.0.0
+werkzeug==3.0.1
+
+# NLP & ML (core)
+scikit-learn==1.4.0
+numpy==1.26.3
+
+# Audio processing (optional - install for full audio analysis)
+# openai-whisper==20231117
+# librosa==0.10.1
+# soundfile==0.12.1
+
+# Uncomment for full audio feature extraction:
+# torch>=2.0.0  # required by Whisper

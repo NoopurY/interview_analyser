@@ -1,0 +1,42 @@
+[
+  {
+    "id": "sample_001",
+    "label": "weak",
+    "question": "Tell me about yourself.",
+    "transcript": "Um, so basically I am like a software developer. I kind of worked at a few companies you know. Uh, I like to code and I guess I am pretty good at it. Sort of. I mean I have done some projects but I am not sure exactly what to say honestly.",
+    "expected_grade": "Poor",
+    "notes": "High fillers, no structure, no specifics, no STAR"
+  },
+  {
+    "id": "sample_002",
+    "label": "average",
+    "question": "Tell me about a challenging project.",
+    "transcript": "Um, so I worked on a migration project at my last company. It was kind of challenging because we had to move from one system to another. I helped with the migration and we basically got it done. Like, it took about three months and the team was pretty happy with the result. I used Python and some cloud tools.",
+    "expected_grade": "Average",
+    "notes": "Some structure, a few fillers, vague outcomes, partial STAR"
+  },
+  {
+    "id": "sample_003",
+    "label": "good",
+    "question": "Describe a time you showed leadership.",
+    "transcript": "At CloudScale, our infrastructure team was facing a critical situation where our deployment pipeline was failing 30 percent of the time, causing major delays. My task was to diagnose and fix this within two weeks before our product launch. I led a root cause analysis session with four engineers, identified a race condition in our CI system, and redesigned the pipeline architecture. I also coordinated daily syncs with the product team to manage expectations. The result was a 100 percent deployment success rate, and we launched on time. The fix also reduced average build time by 45 percent.",
+    "expected_grade": "Good",
+    "notes": "Full STAR, quantified results, zero fillers, strong confidence language"
+  },
+  {
+    "id": "sample_004",
+    "label": "excellent",
+    "question": "Tell me about a time you drove significant business impact.",
+    "transcript": "When I joined FinTech Solutions as Principal Engineer, our fraud detection system had a false positive rate of 12 percent, flagging legitimate transactions and costing us approximately 2 million dollars annually in lost revenue. My responsibility was to redesign the ML pipeline end to end within one quarter. I assembled a cross-functional team of five engineers and two data scientists, implemented an ensemble model combining gradient boosting with a real-time rule engine, and established an A/B testing framework to validate improvements safely in production. I personally mentored two junior engineers through their first ML deployment and presented progress updates directly to the CTO weekly. The result exceeded all targets: false positives dropped to 2.1 percent, recovered 1.8 million dollars in annual revenue, reduced customer complaints by 67 percent, and the framework we built became the standard for all ML deployments at the company.",
+    "expected_grade": "Excellent",
+    "notes": "Complete STAR with multiple quantified results, professional vocabulary, clear leadership"
+  },
+  {
+    "id": "sample_005",
+    "label": "nervous",
+    "question": "What is your greatest weakness?",
+    "transcript": "Um, I guess maybe like I sometimes struggle with, you know, delegating tasks? Sort of. Like I kind of want to do everything myself. Uh, but I am trying to get better at it I think. I mean I have been working on it but I am not sure if I have made much progress honestly. Maybe.",
+    "expected_grade": "Poor",
+    "notes": "Extremely high filler count, hedging language, no concrete example, very nervous markers"
+  }
+]

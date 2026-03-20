@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Interview Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #080c14;
+      --bg2:        #0d1320;
+      --glass:      rgba(255,255,255,0.04);
+      --glass-b:    rgba(255,255,255,0.09);
+      --border:     rgba(255,255,255,0.08);
+      --border-a:   rgba(99,202,255,0.25);
+      --text:       #e8edf5;
+      --muted:      #7a8799;
+      --accent:     #63caff;
+      --accent2:    #a78bfa;
+      --accent3:    #34d399;
+      --warn:       #fbbf24;
+      --danger:     #f87171;
+      --glow:       rgba(99,202,255,0.12);
+      --font-head:  'Syne', sans-serif;
+      --font-body:  'DM Sans', sans-serif;
+      --r:          16px;
+      --r2:         24px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background Orbs ───────────────────────────────────────── */
+    .bg-orbs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: 0.18;
+      animation: orbFloat 12s ease-in-out infinite;
+    }
+    .orb-1 { width:600px; height:600px; background:var(--accent); top:-200px; left:-200px; animation-delay:0s; }
+    .orb-2 { width:400px; height:400px; background:var(--accent2); bottom:-150px; right:-100px; animation-delay:4s; }
+    .orb-3 { width:300px; height:300px; background:var(--accent3); top:50%; left:60%; animation-delay:8s; }
+
+    @keyframes orbFloat {
+      0%,100% { transform:translate(0,0) scale(1); }
+      50%      { transform:translate(30px,20px) scale(1.05); }
+    }
+
+    /* ── Layout ────────────────────────────────────────────────── */
+    .wrap { position: relative; z-index: 1; }
+
+    /* ── NAV ───────────────────────────────────────────────────── */
+    nav {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:20px 48px;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(8,12,20,0.7);
+    }
+    .logo {
+      font-family: var(--font-head);
+      font-size: 1.2rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+    .logo span { color: var(--accent3); -webkit-text-fill-color: var(--accent3); }
+    .nav-badge {
+      font-size: 0.7rem; font-weight: 500;
+      padding: 4px 10px; border-radius: 20px;
+      background: var(--glass-b); border: 1px solid var(--border);
+      color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+    }
+
+    /* ── Hero ──────────────────────────────────────────────────── */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 80px 24px 40px;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.75rem; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); border: 1px solid var(--border-a);
+      padding: 6px 16px; border-radius: 20px;
+      background: rgba(99,202,255,0.06);
+      margin-bottom: 32px;
+      animation: fadeSlideUp 0.6s ease both;
+    }
+    .dot-pulse {
+      width:6px; height:6px; border-radius:50%;
+      background: var(--accent3);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.6)} }
+
+    h1 {
+      font-family: var(--font-head);
+      font-size: clamp(3rem, 7vw, 6rem);
+      font-weight: 800;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      margin-bottom: 24px;
+      animation: fadeSlideUp 0.6s 0.1s ease both;
+    }
+    h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 60%, var(--accent3) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 1.15rem; color: var(--muted); max-width: 520px;
+      line-height: 1.7; margin-bottom: 48px;
+      animation: fadeSlideUp 0.6s 0.2s ease both;
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── Upload Zone ────────────────────────────────────────────── */
+    .upload-zone {
+      width: 100%; max-width: 620px;
+      background: var(--glass);
+      border: 1.5px dashed var(--border-a);
+      border-radius: var(--r2);
+      padding: 48px 32px;
+      cursor: pointer;
+      transition: all 0.3s;
+      animation: fadeSlideUp 0.6s 0.3s ease both;
+      position: relative; overflow: hidden;
+    }
+    .upload-zone::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(99,202,255,0.06), transparent 60%);
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(99,202,255,0.05);
+      transform: translateY(-2px);
+      box-shadow: 0 20px 60px rgba(99,202,255,0.1);
+    }
+    .upload-icon { font-size: 3rem; margin-bottom: 16px; }
+    .upload-zone h3 { font-family: var(--font-head); font-size: 1.2rem; margin-bottom: 8px; }
+    .upload-zone p { color: var(--muted); font-size: 0.9rem; }
+    .upload-formats {
+      display: flex; gap: 8px; justify-content: center; margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .fmt-badge {
+      font-size: 0.7rem; padding: 3px 10px; border-radius: 12px;
+      background: var(--glass-b); border: 1px solid var(--border);
+      color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    #fileInput { display: none; }
+
+    /* ── Divider ────────────────────────────────────────────────── */
+    .divider {
+      display: flex; align-items: center; gap: 16px;
+      max-width: 620px; width: 100%;
+      color: var(--muted); font-size: 0.8rem;
+      animation: fadeSlideUp 0.6s 0.35s ease both;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── Text Input ─────────────────────────────────────────────── */
+    .text-input-section {
+      width: 100%; max-width: 620px;
+      animation: fadeSlideUp 0.6s 0.4s ease both;
+    }
+    .input-label {
+      font-size: 0.8rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.08em; margin-bottom: 8px; display: block;
+    }
+    .glass-input {
+      width: 100%;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      resize: vertical;
+    }
+    .glass-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,202,255,0.1);
+    }
+    .glass-input::placeholder { color: var(--muted); }
+    textarea.glass-input { min-height: 130px; }
+
+    /* ── Buttons ─────────────────────────────────────────────────── */
+    .btn-row {
+      display: flex; gap: 12px;
+      max-width: 620px; width: 100%;
+      animation: fadeSlideUp 0.6s 0.5s ease both;
+    }
+    .btn {
+      flex: 1; padding: 16px 24px;
+      border: none; border-radius: var(--r);
+      font-family: var(--font-head);
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: all 0.25s;
+      letter-spacing: -0.01em;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(99,202,255,0.25);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(99,202,255,0.35);
+    }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      background: var(--glass-b);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn span { margin-right: 6px; }
+
+    /* ── Loading Screen ─────────────────────────────────────────── */
+    #loading {
+      display: none;
+      min-height: 100vh;
+      align-items: center; justify-content: center;
+      flex-direction: column; text-align: center;
+      padding: 40px;
+    }
+    .loader-ring {
+      width: 80px; height: 80px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 32px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text {
+      font-family: var(--font-head); font-size: 1.4rem; font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .loader-sub { color: var(--muted); font-size: 0.9rem; }
+    .loader-steps { margin-top: 32px; display: flex; flex-direction: column; gap: 8px; }
+    .step-item {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.85rem; color: var(--muted);
+      padding: 8px 20px; background: var(--glass); border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .step-item.active { color: var(--accent); border-color: var(--border-a); background: rgba(99,202,255,0.05); }
+    .step-item.done { color: var(--accent3); }
+    .step-dot { width:8px; height:8px; border-radius:50%; background: var(--muted); }
+    .step-item.active .step-dot { background: var(--accent); animation: pulse 1s infinite; }
+    .step-item.done .step-dot { background: var(--accent3); }
+
+    /* ── Results Dashboard ──────────────────────────────────────── */
+    #results {
+      display: none;
+      padding: 60px 24px 80px;
+      max-width: 1100px; margin: 0 auto;
+      animation: fadeSlideUp 0.5s ease both;
+    }
+    .results-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 40px; flex-wrap: wrap; gap: 20px;
+    }
+    .results-title { font-family: var(--font-head); font-size: 1.8rem; font-weight: 800; }
+    .results-subtitle { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+    .grade-badge {
+      font-family: var(--font-head); font-size: 1rem; font-weight: 700;
+      padding: 8px 20px; border-radius: 20px;
+    }
+    .grade-Excellent { background: rgba(52,211,153,0.15); color: var(--accent3); border: 1px solid rgba(52,211,153,0.3); }
+    .grade-Good      { background: rgba(99,202,255,0.12); color: var(--accent);  border: 1px solid var(--border-a); }
+    .grade-Average   { background: rgba(251,191,36,0.12); color: var(--warn);    border: 1px solid rgba(251,191,36,0.3); }
+    .grade-Needs     { background: rgba(248,113,113,0.12); color: var(--danger);  border: 1px solid rgba(248,113,113,0.3); }
+    .grade-Poor      { background: rgba(248,113,113,0.15); color: var(--danger);  border: 1px solid rgba(248,113,113,0.4); }
+
+    /* ── Score Cards ────────────────────────────────────────────── */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px; margin-bottom: 40px;
+    }
+    .score-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 28px 24px;
+      text-align: center;
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+      animation: fadeSlideUp 0.5s ease both;
+    }
+    .score-card:hover { transform: translateY(-3px); border-color: var(--border-a); }
+    .score-card::before {
+      content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
+      width:60%; height:2px; border-radius:0 0 4px 4px;
+    }
+    .score-card.conf::before  { background: linear-gradient(90deg, var(--accent), transparent); }
+    .score-card.clar::before  { background: linear-gradient(90deg, var(--accent2), transparent); }
+    .score-card.comm::before  { background: linear-gradient(90deg, var(--accent3), transparent); }
+    .score-card.over::before  { background: linear-gradient(90deg, var(--warn), transparent); }
+
+    .score-label {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--muted); margin-bottom: 16px;
+    }
+    .score-circle-wrap { position: relative; width: 100px; height: 100px; margin: 0 auto 16px; }
+    .score-svg { transform: rotate(-90deg); }
+    .score-track { fill: none; stroke: var(--border); stroke-width: 8; }
+    .score-fill { fill: none; stroke-width: 8; stroke-linecap: round;
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .score-number {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-head); font-size: 1.8rem; font-weight: 800;
+    }
+    .score-desc { font-size: 0.85rem; color: var(--muted); }
+
+    /* ── Nervousness Indicator ──────────────────────────────────── */
+    .nerv-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 24px;
+      display: flex; align-items: center; gap: 20px;
+      margin-bottom: 40px;
+    }
+    .nerv-icon { font-size: 2.5rem; }
+    .nerv-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+    .nerv-value { font-family: var(--font-head); font-size: 1.3rem; font-weight: 700; margin-top: 4px; }
+    .nerv-bar-wrap { flex: 1; }
+    .nerv-bar-bg { background: var(--border); border-radius: 8px; height: 6px; overflow: hidden; }
+    .nerv-bar-fill { height: 100%; border-radius: 8px; transition: width 1.2s ease; }
+    .nerv-Low    .nerv-value { color: var(--accent3); }
+    .nerv-Medium .nerv-value { color: var(--warn); }
+    .nerv-High   .nerv-value { color: var(--danger); }
+
+    /* ── Charts Section ─────────────────────────────────────────── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px; margin-bottom: 40px;
+    }
+    .chart-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r2);
+      padding: 28px;
+    }
+    .chart-title {
+      font-family: var(--font-head); font-size: 0.95rem; font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .chart-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 20px; }
+    .chart-canvas-wrap { position: relative; height: 200px; }
+
+    /* ── Metrics Grid ───────────────────────────────────────────── */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px; margin-bottom: 40px;
+    }
+    .metric-pill {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
+      transition: border-color 0.2s;
+    }
+    .metric-pill:hover { border-color: var(--border-a); }
+    .metric-pill-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .metric-pill-val { font-family: var(--font-head); font-size: 1.3rem; font-weight: 700; }
+    .metric-pill-unit { font-size: 0.75rem; color: var(--muted); margin-left: 4px; }
+
+    /* ── STAR Method ────────────────────────────────────────────── */
+    .star-section { margin-bottom: 40px; }
+    .section-title {
+      font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+    }
+    .star-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .star-card {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      transition: all 0.2s;
+    }
+    .star-card.detected { border-color: rgba(52,211,153,0.35); background: rgba(52,211,153,0.04); }
+    .star-card.missing  { border-color: rgba(248,113,113,0.25); }
+    .star-letter {
+      font-family: var(--font-head); font-size: 2rem; font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .star-card.detected .star-letter { color: var(--accent3); }
+    .star-card.missing  .star-letter { color: var(--danger); }
+    .star-name  { font-weight: 600; margin-bottom: 4px; }
+    .star-status { font-size: 0.8rem; color: var(--muted); }
+    .star-card.detected .star-status { color: var(--accent3); }
+    .star-card.missing  .star-status { color: var(--danger); }
+
+    /* ── Feedback Section ───────────────────────────────────────── */
+    .feedback-section { margin-bottom: 40px; }
+    .feedback-tabs {
+      display: flex; gap: 4px; margin-bottom: 20px;
+      background: var(--glass); border-radius: 12px;
+      padding: 4px; width: fit-content;
+    }
+    .tab-btn {
+      padding: 8px 20px; border-radius: 8px;
+      font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; border: none;
+      background: transparent; color: var(--muted);
+      transition: all 0.2s; font-family: var(--font-body);
+    }
+    .tab-btn.active {
+      background: var(--glass-b); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .feedback-list { display: flex; flex-direction: column; gap: 12px; }
+    .feedback-item {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      display: flex; gap: 16px;
+      transition: border-color 0.2s;
+      animation: fadeSlideUp 0.3s ease both;
+    }
+    .feedback-item:hover { border-color: var(--border-a); }
+    .feedback-item.strength { border-left: 3px solid var(--accent3); }
+    .feedback-item.improvement { border-left: 3px solid var(--accent); }
+    .feedback-item.warning { border-left: 3px solid var(--danger); }
+    .fi-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .fi-body {}
+    .fi-cat { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+    .fi-title { font-weight: 600; margin-bottom: 6px; font-size: 0.95rem; }
+    .fi-detail { font-size: 0.85rem; color: var(--muted); line-height: 1.6; }
+    .fi-tip {
+      font-size: 0.8rem; margin-top: 10px;
+      background: rgba(99,202,255,0.06);
+      border: 1px solid var(--border-a);
+      border-radius: 8px; padding: 8px 12px;
+      color: var(--accent);
+    }
+    .fi-tip::before { content: "💡 Tip: "; font-weight: 600; }
+
+    /* ── Transcript Box ─────────────────────────────────────────── */
+    .transcript-box {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      font-size: 0.9rem; line-height: 1.8;
+      max-height: 240px; overflow-y: auto;
+      color: var(--muted);
+    }
+    .transcript-box::-webkit-scrollbar { width: 4px; }
+    .transcript-box::-webkit-scrollbar-track { background: transparent; }
+    .transcript-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* Summary card */
+    .summary-card {
+      background: linear-gradient(135deg, rgba(99,202,255,0.07), rgba(167,139,250,0.07));
+      border: 1px solid rgba(99,202,255,0.2);
+      border-radius: var(--r2);
+      padding: 24px;
+      margin-bottom: 40px;
+      font-size: 0.95rem; line-height: 1.8; color: var(--text);
+    }
+
+    /* ── Reset button ───────────────────────────────────────────── */
+    .reset-row {
+      display: flex; justify-content: center; margin-top: 20px;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      nav { padding: 16px 20px; }
+      h1 { font-size: 2.5rem; }
+      .score-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg-orbs">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo">AI<span>.</span>Interview</div>
+    <span class="nav-badge">v1.0 · ML Powered</span>
+  </nav>
+
+  <!-- ── HERO / UPLOAD ───────────────────────────────────────── -->
+  <section id="hero">
+    <div class="hero-eyebrow">
+      <div class="dot-pulse"></div>
+      Multimodal Intelligence System
+    </div>
+
+    <h1>Analyze Your<br><em>Interview Performance</em></h1>
+
+    <p class="hero-sub">
+      Upload an audio recording or paste your transcript. Our AI analyzes speech patterns,
+      behavioral signals, and communication quality—then gives you a detailed improvement plan.
+    </p>
+
+    <!-- Upload Zone -->
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">🎙️</div>
+      <h3>Drop audio file here</h3>
+      <p>Drag & drop or click to browse</p>
+      <div class="upload-formats">
+        <span class="fmt-badge">WAV</span>
+        <span class="fmt-badge">MP3</span>
+        <span class="fmt-badge">M4A</span>
+        <span class="fmt-badge">OGG</span>
+      </div>
+      <input type="file" id="fileInput" accept=".wav,.mp3,.m4a,.ogg" onchange="handleFile(this)">
+    </div>
+
+    <div style="margin: 6px 0; font-size:0.8rem; color:var(--accent3); max-width:620px; width:100%;">
+      ✓ <span id="fileStatus">No file selected</span>
+    </div>
+
+    <!-- OR Divider -->
+    <div class="divider" style="margin: 20px 0 16px;">or paste your transcript</div>
+
+    <!-- Text Input Section -->
+    <div class="text-input-section">
+      <label class="input-label" for="questionInput">Interview Question</label>
+      <input class="glass-input" type="text" id="questionInput"
+        placeholder="e.g. Tell me about a time you led a challenging project…"
+        value="Tell me about a time you led a challenging project.">
+
+      <label class="input-label" for="transcriptInput" style="margin-top:16px;">Your Answer (Transcript)</label>
+      <textarea class="glass-input" id="transcriptInput"
+        placeholder="Paste your interview response here…
+e.g. Um, so basically when I was at TechCorp, I was responsible for leading a team of 5 engineers. Like, we built a microservices platform…"></textarea>
+    </div>
+
+    <!-- Buttons -->
+    <div class="btn-row" style="margin-top: 20px;">
+      <button class="btn btn-primary" id="analyzeBtn" onclick="runAnalysis()">
+        <span>⚡</span> Analyze Now
+      </button>
+      <button class="btn btn-secondary" onclick="loadDemo()">
+        <span>🎬</span> Try Demo
+      </button>
+    </div>
+  </section>
+
+  <!-- ── LOADING ─────────────────────────────────────────────── -->
+  <section id="loading">
+    <div class="loader-ring"></div>
+    <div class="loader-text">Analyzing Interview…</div>
+    <div class="loader-sub">Processing speech patterns and behavioral signals</div>
+    <div class="loader-steps">
+      <div class="step-item" id="step1"><div class="step-dot"></div>Processing transcript</div>
+      <div class="step-item" id="step2"><div class="step-dot"></div>Running NLP analysis</div>
+      <div class="step-item" id="step3"><div class="step-dot"></div>Scoring communication signals</div>
+      <div class="step-item" id="step4"><div class="step-dot"></div>Generating feedback</div>
+    </div>
+  </section>
+
+  <!-- ── RESULTS DASHBOARD ───────────────────────────────────── -->
+  <section id="results">
+    <div class="results-header">
+      <div>
+        <div class="results-title">Interview Analysis Report</div>
+        <div class="results-subtitle">AI-powered behavioral & communication intelligence</div>
+      </div>
+      <div id="gradeBadge" class="grade-badge"></div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-card" id="summaryText"></div>
+
+    <!-- Score Cards -->
+    <div class="score-grid">
+      <div class="score-card conf">
+        <div class="score-label">Confidence</div>
+        <div class="score-circle-wrap">
+          <svg class="score-svg" viewBox="0 0 100 100" width="100" height="100">
+            <circle class="score-track" cx="50" cy="50" r="40"/>
+            <circle class="score-fill" id="confCircle" cx="50" cy="50" r="40"
+              stroke="url(#gradConf)" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+            <defs>
+              <linearGradient id="gradConf" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#63caff"/>
+                <stop offset="100%" stop-color="#3b82f6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="score-number" id="confNum">0</div>
+        </div>
+        <div class="score-desc">Language & delivery signals</div>
+      </div>
+
+      <div class="score-card clar">
+        <div class="score-label">Clarity</div>
+        <div class="score-circle-wrap">
+          <svg class="score-svg" viewBox="0 0 100 100" width="100" height="100">
+            <circle class="score-track" cx="50" cy="50" r="40"/>
+            <circle class="score-fill" id="clarCircle" cx="50" cy="50" r="40"
+              stroke="url(#gradClar)" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+            <defs>
+              <linearGradient id="gradClar" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#a78bfa"/>
+                <stop offset="100%" stop-color="#7c3aed"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="score-number" id="clarNum">0</div>
+        </div>
+        <div class="score-desc">Structure & vocabulary</div>
+      </div>
+
+      <div class="score-card comm">
+        <div class="score-label">Communication</div>
+        <div class="score-circle-wrap">
+          <svg class="score-svg" viewBox="0 0 100 100" width="100" height="100">
+            <circle class="score-track" cx="50" cy="50" r="40"/>
+            <circle class="score-fill" id="commCircle" cx="50" cy="50" r="40"
+              stroke="url(#gradComm)" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+            <defs>
+              <linearGradient id="gradComm" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#34d399"/>
+                <stop offset="100%" stop-color="#059669"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="score-number" id="commNum">0</div>
+        </div>
+        <div class="score-desc">STAR, tone & impact</div>
+      </div>
+
+      <div class="score-card over">
+        <div class="score-label">Overall Score</div>
+        <div class="score-circle-wrap">
+          <svg class="score-svg" viewBox="0 0 100 100" width="100" height="100">
+            <circle class="score-track" cx="50" cy="50" r="40"/>
+            <circle class="score-fill" id="overCircle" cx="50" cy="50" r="40"
+              stroke="url(#gradOver)" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+            <defs>
+              <linearGradient id="gradOver" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fbbf24"/>
+                <stop offset="100%" stop-color="#d97706"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="score-number" id="overNum">0</div>
+        </div>
+        <div class="score-desc">Composite performance</div>
+      </div>
+    </div>
+
+    <!-- Nervousness -->
+    <div class="nerv-card" id="nervCard">
+      <div class="nerv-icon" id="nervIcon">😐</div>
+      <div>
+        <div class="nerv-label">Nervousness Level</div>
+        <div class="nerv-value" id="nervValue">-</div>
+      </div>
+      <div class="nerv-bar-wrap">
+        <div class="nerv-bar-bg">
+          <div class="nerv-bar-fill" id="nervBar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics Pills -->
+    <div class="metrics-grid" id="metricsGrid"></div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Filler Word Breakdown</div>
+        <div class="chart-sub">Frequency of hesitation words detected</div>
+        <div class="chart-canvas-wrap">
+          <canvas id="fillerChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Score Breakdown</div>
+        <div class="chart-sub">All four dimensions at a glance</div>
+        <div class="chart-canvas-wrap">
+          <canvas id="radarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAR Method -->
+    <div class="star-section">
+      <div class="section-title">⭐ STAR Method Analysis</div>
+      <div class="star-grid" id="starGrid"></div>
+    </div>
+
+    <!-- Feedback Tabs -->
+    <div class="feedback-section">
+      <div class="section-title">🧠 Detailed Feedback</div>
+      <div class="feedback-tabs">
+        <button class="tab-btn active" onclick="switchTab('all',this)">All</button>
+        <button class="tab-btn" onclick="switchTab('strength',this)">Strengths</button>
+        <button class="tab-btn" onclick="switchTab('improvement',this)">Improvements</button>
+        <button class="tab-btn" onclick="switchTab('warning',this)">Warnings</button>
+      </div>
+      <div class="feedback-list" id="feedbackList"></div>
+    </div>
+
+    <!-- Transcript -->
+    <div>
+      <div class="section-title">📝 Transcript Used</div>
+      <div class="transcript-box" id="transcriptDisplay"></div>
+    </div>
+
+    <div class="reset-row">
+      <button class="btn btn-secondary" style="max-width:260px;" onclick="resetToHome()">
+        ← Analyze Another Response
+      </button>
+    </div>
+  </section>
+
+</div><!-- /wrap -->
+
+<script>
+// ────────────────────────────────────────────────────────────
+// State
+// ────────────────────────────────────────────────────────────
+let currentData = null;
+let allFeedback = [];
+let fillerChartInst = null;
+let radarChartInst = null;
+
+const API = 'http://localhost:5000';
+
+// ────────────────────────────────────────────────────────────
+// File Handling
+// ────────────────────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) processFileObj(f);
+});
+
+function handleFile(input) {
+  if (input.files[0]) processFileObj(input.files[0]);
+}
+
+function processFileObj(file) {
+  document.getElementById('fileStatus').textContent = `✓ ${file.name} selected`;
+  window._pendingFile = file;
+}
+
+// ────────────────────────────────────────────────────────────
+// Demo Data
+// ────────────────────────────────────────────────────────────
+function loadDemo() {
+  document.getElementById('questionInput').value = 'Tell me about a time you led a challenging project.';
+  document.getElementById('transcriptInput').value =
+    'Um, so basically when I was at TechCorp, I kind of led a team of five engineers. ' +
+    'Like, we were, you know, tasked with migrating our monolithic app to microservices. ' +
+    'The situation was that our system was, uh, struggling to handle peak loads — ' +
+    'like 10x traffic spikes during product launches. My task was to design and, ' +
+    'you know, implement a scalable architecture. I actually took action by proposing ' +
+    'a phased migration approach and I coordinated with stakeholders across three departments. ' +
+    'I kind of managed the project timeline and resolved blockers. ' +
+    'The result was, uh, a 60% improvement in system reliability and we, like, ' +
+    'reduced infrastructure costs by $80K annually. The team was really happy and ' +
+    'I guess the CEO mentioned it in the all-hands meeting.';
+}
+
+// ────────────────────────────────────────────────────────────
+// Analysis
+// ────────────────────────────────────────────────────────────
+async function runAnalysis() {
+  const text = document.getElementById('transcriptInput').value.trim();
+  const question = document.getElementById('questionInput').value.trim();
+
+  if (!text && !window._pendingFile) {
+    alert('Please paste a transcript or upload an audio file first.');
+    return;
+  }
+
+  showLoading();
+  animateSteps();
+
+  try {
+    let data;
+
+    if (window._pendingFile) {
+      data = await analyzeWithAudio(window._pendingFile, text, question);
+    } else {
+      data = await analyzeText(text, question);
+    }
+
+    currentData = data;
+    showResults(data);
+  } catch (err) {
+    // Backend unavailable: run fully in-browser analysis
+    console.warn('Backend unavailable, running client-side analysis:', err.message);
+    const data = clientSideAnalysis(text, question);
+    currentData = data;
+    showResults(data);
+  }
+}
+
+async function analyzeText(text, question) {
+  const res = await fetch(`${API}/api/analyze-text`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, question })
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+async function analyzeWithAudio(file, text, question) {
+  const fd = new FormData();
+  fd.append('audio', file);
+  if (text) fd.append('text', text);
+  if (question) fd.append('question', question);
+
+  const upRes = await fetch(`${API}/api/upload`, { method: 'POST', body: fd });
+  const { session_id } = await upRes.json();
+
+  await fetch(`${API}/api/analyze`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id })
+  });
+
+  const r = await fetch(`${API}/api/results/${session_id}`);
+  return r.json();
+}
+
+// ────────────────────────────────────────────────────────────
+// CLIENT-SIDE ANALYSIS (runs when backend is offline)
+// ────────────────────────────────────────────────────────────
+function clientSideAnalysis(text, question) {
+  const fillerWords = ['um','uh','like','you know','so','basically','actually',
+    'literally','right','okay','well','hmm','kind of','sort of','i mean'];
+  const textLow = text.toLowerCase();
+  const words = text.split(/\s+/);
+  const wc = words.length;
+
+  // Filler count
+  const fillerDetail = {};
+  let fillerCount = 0;
+  fillerWords.forEach(fw => {
+    const re = new RegExp('\\b' + fw.replace(/ /g,'\\s+') + '\\b','gi');
+    const m = (text.match(re)||[]).length;
+    if (m > 0) { fillerDetail[fw] = m; fillerCount += m; }
+  });
+
+  // STAR
+  const starKw = {
+    situation:['situation','context','was working','were facing','when i','background'],
+    task:['task','responsibility','my job','needed to','my goal','challenge was','problem was'],
+    action:['i did','i took','i implemented','i designed','i built','i led','i coordinated','i proposed','i managed'],
+    result:['result','outcome','achieved','improved','increased','reduced','saved','percent','%','revenue','cost']
+  };
+  const starComp = {};
+  Object.entries(starKw).forEach(([k,kws])=>{
+    const hits = kws.filter(kw=>textLow.includes(kw));
+    starComp[k] = { detected: hits.length > 0, confidence: Math.min(hits.length/2,1), matched_keywords: hits.slice(0,3) };
+  });
+  const detected = Object.entries(starComp).filter(([,v])=>v.detected).map(([k])=>k);
+  const missing  = Object.entries(starComp).filter(([,v])=>!v.detected).map(([k])=>k);
+
+  // Confidence indicators
+  const hiConf = ['i am','i have','i will','i can','i did','i led','i built','achieved','delivered','successfully','accomplished'].filter(w=>textLow.includes(w)).length;
+  const loConf = ['i think','i guess','maybe','perhaps','sort of','kind of','i hope','possibly','not sure','tried to'].filter(w=>textLow.includes(w)).length;
+  const confRatio = hiConf / Math.max(hiConf+loConf, 1);
+
+  // Professional terms
+  const profTerms = ['stakeholder','deliverable','kpi','roi','agile','scrum','deployment','scalability',
+    'architecture','optimization','collaboration','strategy','metrics','performance','leadership',
+    'framework','implementation','infrastructure','methodology','milestone'].filter(t=>textLow.includes(t)).length;
+
+  const hasNumbers = /\d+%|\d+x|\$\d+|\d+\s*(percent|times|million|billion)/.test(textLow);
+
+  // Sentences
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(s=>s.trim().length > 5);
+  const sentLens = sentences.map(s=>s.split(/\s+/).length);
+  const meanLen = sentLens.length ? sentLens.reduce((a,b)=>a+b,0)/sentLens.length : 15;
+
+  // TTR
+  const uniqueWords = new Set(text.toLowerCase().match(/\b[a-z]+\b/g)||[]);
+  const ttr = uniqueWords.size / Math.sqrt(2 * Math.max(wc, 1));
+
+  // Passive voice
+  const passiveCount = (text.match(/\b(was|were|been|being)\s+\w+ed\b/gi)||[]).length;
+
+  // Scores
+  let conf = 50
+    + (confRatio - 0.5) * 40
+    - Math.min(fillerCount/wc * 200, 25)
+    + (hasNumbers ? 8 : 0)
+    + Math.min(profTerms * 2, 12);
+
+  let clar = 55
+    + Math.min(ttr * 15, 15)
+    - Math.min(fillerCount * 1.5, 20)
+    - Math.max(meanLen - 20, 0) * 1.5;
+
+  let comm = 50
+    + (detected.length / 4) * 20
+    - Math.min(fillerCount, 15)
+    + (hasNumbers ? 8 : 0)
+    + Math.min(profTerms * 1.5, 10);
+
+  conf = Math.round(Math.max(0, Math.min(100, conf)));
+  clar = Math.round(Math.max(0, Math.min(100, clar)));
+  comm = Math.round(Math.max(0, Math.min(100, comm)));
+  const overall = Math.round((conf + clar + comm) / 3);
+
+  const grade = overall>=85?'Excellent':overall>=70?'Good':overall>=55?'Average':overall>=40?'Needs Improvement':'Poor';
+
+  const nervScore = (fillerCount/wc > 0.08 ? 3 : fillerCount/wc > 0.04 ? 1 : 0) + (loConf > 5 ? 2 : 0);
+  const nervLevel = nervScore >= 5 ? 'High' : nervScore >= 2 ? 'Medium' : 'Low';
+
+  // Tone score
+  const toneScore = Math.round(Math.max(0, Math.min(100,
+    50 + Math.min(profTerms*5,25) + (hasNumbers?15:0) - Math.min(passiveCount/sentences.length*10,20)
+  )));
+
+  const nlp = {
+    filler_count: fillerCount, filler_detail: fillerDetail,
+    word_count: wc, cleaned_text: text,
+    sentence_stats: { count: sentences.length, mean_words: Math.round(meanLen*10)/10,
+      min_words: Math.min(...sentLens, 999), max_words: Math.max(...sentLens, 0),
+      short_sentences_pct: sentLens.filter(l=>l<8).length/Math.max(sentLens.length,1)*100,
+      long_sentences_pct: sentLens.filter(l=>l>25).length/Math.max(sentLens.length,1)*100
+    },
+    vocabulary: { ttr: Math.round(ttr*1000)/1000, type_token_ratio: Math.round(uniqueWords.size/wc*1000)/1000,
+      unique_words: uniqueWords.size, total_words: wc, professional_terms: profTerms },
+    star_analysis: { star_score: Math.round(detected.length/4*100), components: starComp,
+      detected_components: detected, missing_components: missing, has_full_star: detected.length===4 },
+    confidence_indicators: { high_confidence_count: hiConf, low_confidence_count: loConf,
+      confidence_ratio: Math.round(confRatio*1000)/1000, nervousness_indicators: loConf },
+    professional_tone: { professional_terms_count: profTerms, has_quantitative_results: hasNumbers,
+      passive_voice_count: passiveCount, tone_score: toneScore }
+  };
+
+  const audio = {
+    duration_seconds: Math.round(wc/140*60), speaking_rate_estimate: 140,
+    pitch_variation: 13, pause_count: 5, pause_frequency: 5, method: 'client_estimate'
+  };
+
+  const scores = { confidence: conf, clarity: clar, communication: comm, overall,
+    grade, nervousness: { level: nervLevel, color: nervLevel==='High'?'red':nervLevel==='Medium'?'amber':'green',
+    score: nervScore, max_score: 9 }};
+
+  // Generate feedback client-side
+  const feedback = generateClientFeedback(nlp, audio, scores);
+
+  return { transcript: text, question, scores, audio_features: audio, nlp_analysis: nlp, feedback,
+    metadata: { transcription_method: 'client', audio_method: 'client_estimate', has_audio: false }};
+}
+
+function generateClientFeedback(nlp, audio, scores) {
+  const items = [];
+  const fc = nlp.filler_count;
+  const wc = nlp.word_count;
+  const fr = fc / wc;
+  const fd = nlp.filler_detail;
+  const star = nlp.star_analysis;
+  const tone = nlp.professional_tone;
+  const vocab = nlp.vocabulary;
+
+  // Fillers
+  if (fc === 0) items.push({ type:'strength', category:'Clarity', icon:'✅', title:'Zero filler words', detail:'Excellent! No filler words detected — strong verbal discipline.' });
+  else if (fc <= 3) items.push({ type:'strength', category:'Clarity', icon:'👍', title:`Minimal filler usage (${fc})`, detail:'Very few fillers. Good preparation and control.' });
+  else if (fc <= 8) {
+    const top = Object.entries(fd).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([w,c])=>`"${w}" (${c}x)`).join(', ');
+    items.push({ type:'improvement', category:'Clarity', icon:'⚠️', title:`Moderate filler usage (${fc} instances)`, detail:`Most used: ${top}.`, tip:'Replace fillers with deliberate pauses.' });
+  } else {
+    const top = Object.entries(fd).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([w,c])=>`"${w}" (${c}x)`).join(', ');
+    items.push({ type:'warning', category:'Clarity', icon:'🚨', title:`High filler frequency (${fc} instances)`, detail:`Significantly reduces confidence. Top fillers: ${top}.`, tip:'Practice the pause-and-breathe technique.' });
+  }
+
+  // STAR
+  if (star.has_full_star) items.push({ type:'strength', category:'Structure', icon:'⭐', title:'Complete STAR method', detail:'All four STAR components present.' });
+  else if (star.detected_components.length >= 3)
+    items.push({ type:'improvement', category:'Structure', icon:'⭐', title:`STAR mostly present (missing: ${star.missing_components.map(c=>c[0].toUpperCase()+c.slice(1)).join(', ')})`, detail:`Add the missing components to maximize structure score.` });
+  else
+    items.push({ type:'warning', category:'Structure', icon:'📋', title:`STAR method partially used (${star.detected_components.length}/4)`, detail:`Missing: ${star.missing_components.map(c=>c[0].toUpperCase()+c.slice(1)).join(', ')}`, tip:"Template: 'In [situation], my task was [task]. I did [action]. Result: [measurable outcome].'" });
+
+  // Numbers
+  if (tone.has_quantitative_results)
+    items.push({ type:'strength', category:'Impact', icon:'📈', title:'Quantitative results included', detail:'Numbers and metrics make your answer far more compelling.' });
+  else
+    items.push({ type:'improvement', category:'Impact', icon:'📉', title:'No quantified results', detail:"Vague claims lack impact. Add numbers: '40% faster', '$80K saved'.", tip:"For every achievement ask: By how much? Over what timeframe? What dollar value?" });
+
+  // Confidence
+  if (scores.confidence >= 70)
+    items.push({ type:'strength', category:'Confidence', icon:'💪', title:`Strong confidence (${scores.confidence}/100)`, detail:'Assertive language signals ownership and capability.' });
+  else
+    items.push({ type:'improvement', category:'Confidence', icon:'🎯', title:`Low confidence signals (${scores.confidence}/100)`, detail:"Replace hedging like 'I think' or 'I guess' with direct statements.", tip:"'I think I can handle that' → 'I have handled that before — here's how.'" });
+
+  // Nervousness
+  const n = scores.nervousness;
+  if (n.level === 'Low')
+    items.push({ type:'strength', category:'Composure', icon:'😎', title:'Calm & composed delivery', detail:'Minimal nervousness indicators. Inspires interviewer confidence.' });
+  else if (n.level === 'Medium')
+    items.push({ type:'improvement', category:'Composure', icon:'😐', title:'Moderate nervousness detected', detail:'With practice, anxiety signals reduce significantly.', tip:'Do 3–5 mock interviews before the real one.' });
+  else
+    items.push({ type:'warning', category:'Composure', icon:'😰', title:'High nervousness indicators', detail:'Multiple anxiety markers detected.', tip:'Use box breathing (4-4-4-4) before the interview.' });
+
+  // Vocabulary
+  if (vocab.ttr >= 0.6)
+    items.push({ type:'strength', category:'Vocabulary', icon:'📚', title:'Rich vocabulary', detail:`Diversity score: ${vocab.ttr.toFixed(2)}. Varied word choice keeps answers engaging.` });
+  else if (vocab.ttr < 0.35)
+    items.push({ type:'improvement', category:'Vocabulary', icon:'📖', title:'Limited vocabulary diversity', detail:'Expand domain-specific vocabulary.', tip:'Prepare 10–15 industry terms to use naturally.' });
+
+  if (vocab.professional_terms >= 3)
+    items.push({ type:'strength', category:'Vocabulary', icon:'💼', title:`Strong professional vocabulary (${vocab.professional_terms} terms)`, detail:'Domain expertise signaled through terminology.' });
+
+  const strengths = items.filter(i=>i.type==='strength');
+  const improvements = items.filter(i=>i.type==='improvement');
+  const warnings = items.filter(i=>i.type==='warning');
+
+  const overall = scores.overall;
+  const openings = overall >= 80
+    ? 'Outstanding performance! Your response demonstrates strong communication skills and professional presence.'
+    : overall >= 65 ? 'Good response overall with solid communication skills and some areas to refine.'
+    : overall >= 50 ? 'Decent attempt with potential. Targeted improvements will boost your impact significantly.'
+    : 'Your response needs work in several areas. These skills are learnable with deliberate practice.';
+
+  const summary = openings
+    + ` Confidence: ${scores.confidence}/100, Clarity: ${scores.clarity}/100.`
+    + (fc > 5 ? ` Reducing ${fc} filler words would immediately boost your score.` : '')
+    + (star.missing_components.length ? ` Adding missing STAR components (${star.missing_components.map(c=>c[0].toUpperCase()+c.slice(1)).join(', ')}) strengthens structure.` : '');
+
+  return { summary, strengths, improvements, warnings, all_feedback: items, top_priority: improvements.slice(0,3) };
+}
+
+// ────────────────────────────────────────────────────────────
+// UI State Transitions
+// ────────────────────────────────────────────────────────────
+function showLoading() {
+  document.getElementById('hero').style.display = 'none';
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('results').style.display = 'none';
+}
+
+function showResults(data) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  renderDashboard(data);
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetToHome() {
+  document.getElementById('hero').style.display = 'flex';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+  window._pendingFile = null;
+  document.getElementById('fileStatus').textContent = 'No file selected';
+  destroyCharts();
+}
+
+function animateSteps() {
+  const steps = ['step1','step2','step3','step4'];
+  steps.forEach((id, i) => {
+    setTimeout(() => {
+      steps.forEach(s => document.getElementById(s).classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if (i > 0) document.getElementById(steps[i-1]).classList.add('done');
+    }, i * 700);
+  });
+}
+
+// ────────────────────────────────────────────────────────────
+// Dashboard Rendering
+// ────────────────────────────────────────────────────────────
+function renderDashboard(data) {
+  const { scores, nlp_analysis: nlp, audio_features: audio, feedback, transcript } = data;
+
+  // Grade badge
+  const gb = document.getElementById('gradeBadge');
+  gb.textContent = scores.grade;
+  gb.className = 'grade-badge grade-' + scores.grade.split(' ')[0];
+
+  // Summary
+  document.getElementById('summaryText').textContent = feedback.summary;
+
+  // Scores
+  setScore('conf', scores.confidence);
+  setScore('clar', scores.clarity);
+  setScore('comm', scores.communication);
+  setScore('over', scores.overall);
+
+  // Nervousness
+  const n = scores.nervousness;
+  const nervCard = document.getElementById('nervCard');
+  nervCard.className = 'nerv-card nerv-' + n.level;
+  document.getElementById('nervIcon').textContent = n.level==='Low'?'😎':n.level==='Medium'?'😐':'😰';
+  document.getElementById('nervValue').textContent = n.level + ' Nervousness';
+  const nervPct = (n.score / n.max_score) * 100;
+  const nervBar = document.getElementById('nervBar');
+  nervBar.style.width = '0%';
+  nervBar.style.background = n.level==='Low'?'var(--accent3)':n.level==='Medium'?'var(--warn)':'var(--danger)';
+  setTimeout(() => { nervBar.style.width = nervPct + '%'; }, 400);
+
+  // Metrics
+  renderMetrics(nlp, audio);
+
+  // Charts
+  destroyCharts();
+  setTimeout(() => {
+    renderFillerChart(nlp.filler_detail);
+    renderRadarChart(scores);
+  }, 100);
+
+  // STAR
+  renderStar(nlp.star_analysis);
+
+  // Feedback
+  allFeedback = feedback.all_feedback;
+  renderFeedback(allFeedback);
+
+  // Transcript
+  document.getElementById('transcriptDisplay').textContent = transcript;
+}
+
+function setScore(prefix, value) {
+  const circumference = 251.2;
+  const offset = circumference - (value / 100) * circumference;
+  const circle = document.getElementById(prefix + 'Circle');
+  const numEl  = document.getElementById(prefix + 'Num');
+
+  circle.style.strokeDashoffset = circumference;
+  setTimeout(() => { circle.style.strokeDashoffset = offset; }, 200);
+
+  let current = 0;
+  const step = value / 50;
+  const timer = setInterval(() => {
+    current = Math.min(current + step, value);
+    numEl.textContent = Math.round(current);
+    if (current >= value) clearInterval(timer);
+  }, 20);
+}
+
+function renderMetrics(nlp, audio) {
+  const grid = document.getElementById('metricsGrid');
+  const pills = [
+    { label: 'Filler Words', val: nlp.filler_count, unit: '' },
+    { label: 'Word Count', val: nlp.word_count, unit: '' },
+    { label: 'Sentences', val: nlp.sentence_stats?.count || '-', unit: '' },
+    { label: 'Avg Sentence', val: nlp.sentence_stats?.mean_words || '-', unit: 'words' },
+    { label: 'Vocab Richness', val: nlp.vocabulary?.ttr?.toFixed(2) || '-', unit: '' },
+    { label: 'Prof. Terms', val: nlp.vocabulary?.professional_terms || 0, unit: '' },
+    { label: 'Speaking Rate', val: audio?.speaking_rate_estimate || '-', unit: 'wpm' },
+    { label: 'STAR Score', val: nlp.star_analysis?.star_score || 0, unit: '/100' },
+  ];
+  grid.innerHTML = pills.map(p => `
+    <div class="metric-pill">
+      <div class="metric-pill-label">${p.label}</div>
+      <div class="metric-pill-val">${p.val}<span class="metric-pill-unit">${p.unit}</span></div>
+    </div>
+  `).join('');
+}
+
+function renderFillerChart(fillerDetail) {
+  const ctx = document.getElementById('fillerChart').getContext('2d');
+  const entries = Object.entries(fillerDetail || {}).sort((a,b)=>b[1]-a[1]).slice(0, 8);
+
+  if (entries.length === 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '14px DM Sans'; ctx.textAlign = 'center';
+    ctx.fillText('No filler words detected! 🎉', 150, 100);
+    return;
+  }
+
+  fillerChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: entries.map(([w]) => `"${w}"`),
+      datasets: [{
+        label: 'Count',
+        data: entries.map(([,c]) => c),
+        backgroundColor: 'rgba(99,202,255,0.25)',
+        borderColor: 'rgba(99,202,255,0.7)',
+        borderWidth: 2, borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#7a8799', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+        y: { ticks: { color: '#7a8799', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.04)' } }
+      }
+    }
+  });
+}
+
+function renderRadarChart(scores) {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  radarChartInst = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Confidence', 'Clarity', 'Communication', 'Overall'],
+      datasets: [{
+        label: 'Your Score',
+        data: [scores.confidence, scores.clarity, scores.communication, scores.overall],
+        backgroundColor: 'rgba(99,202,255,0.12)',
+        borderColor: 'rgba(99,202,255,0.7)',
+        pointBackgroundColor: '#63caff',
+        borderWidth: 2, pointRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { color: '#7a8799', stepSize: 25, backdropColor: 'transparent' },
+          grid: { color: 'rgba(255,255,255,0.06)' },
+          pointLabels: { color: '#e8edf5', font: { size: 12 } }
+        }
+      }
+    }
+  });
+}
+
+function renderStar(star) {
+  const components = { S:'Situation', T:'Task', A:'Action', R:'Result' };
+  const keys = ['situation','task','action','result'];
+  document.getElementById('starGrid').innerHTML = keys.map((key, i) => {
+    const letter = Object.keys(components)[i];
+    const name = components[letter];
+    const comp = (star.components || {})[key] || {};
+    const det = comp.detected || (star.detected_components || []).includes(key);
+    return `
+      <div class="star-card ${det ? 'detected' : 'missing'}">
+        <div class="star-letter">${letter}</div>
+        <div class="star-name">${name}</div>
+        <div class="star-status">${det ? '✓ Detected' : '✗ Missing'}</div>
+        ${comp.matched_keywords?.length ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:6px;">${comp.matched_keywords.slice(0,2).map(k=>`"${k}"`).join(', ')}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFeedback(items) {
+  document.getElementById('feedbackList').innerHTML = items.map((item, i) => `
+    <div class="feedback-item ${item.type}" style="animation-delay:${i*0.06}s">
+      <div class="fi-icon">${item.icon}</div>
+      <div class="fi-body">
+        <div class="fi-cat">${item.category}</div>
+        <div class="fi-title">${item.title}</div>
+        <div class="fi-detail">${item.detail}</div>
+        ${item.tip ? `<div class="fi-tip">${item.tip}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function switchTab(type, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = type === 'all' ? allFeedback : allFeedback.filter(i => i.type === type);
+  renderFeedback(filtered);
+}
+
+function destroyCharts() {
+  if (fillerChartInst) { fillerChartInst.destroy(); fillerChartInst = null; }
+  if (radarChartInst)  { radarChartInst.destroy();  radarChartInst = null; }
+}
+</script>
+</body>
+</html>
